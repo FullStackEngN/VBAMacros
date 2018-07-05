@@ -1,0 +1,56 @@
+'Check Office is 32bit or 64bit
+#If Win64 Then
+    'Code is running in 64-bit version of Microsoft Office
+    'Use PtrSafe
+    'Reference Advapi32 LognUserA method
+    Private Declare PtrSafe Function LogonUser Lib "Advapi32" _
+            Alias "LogonUserA" _
+            (ByVal lpszUsername As String, ByVal lpszDomain As String, ByVal lpszPassword As String, _
+             ByVal dwLogonType As Long, ByVal dwLogonProvider As Long, _
+             phToken As Long) As Long
+#Else
+    'Code is running in 32-bit version of Microsoft Office
+    'Reference Advapi32 LognUserA method
+    Private Declare Function LogonUser Lib "Advapi32" _
+                                       Alias "LogonUserA" _
+                                       (ByVal lpszUsername As String, ByVal lpszDomain As String, ByVal lpszPassword As String, _
+                                        ByVal dwLogonType As Long, ByVal dwLogonProvider As Long, _
+                                        phToken As Long) As Long
+
+#End If
+
+Private Sub CommandButtonCancel_Click()
+    Unload Me
+End Sub
+
+
+Private Sub CommandButtonOK_Click()
+    Dim strUserName As String
+    Dim strPassword As String
+    Dim strDomain As String
+    Dim bResult As Boolean
+
+    strUserName = TextBoxUserName.Value
+    strPassword = TextBoxPassword.Value
+    strDomain = TextBoxDomain.Value
+
+    'Call system "advapi32" to verify user credential with AD
+    'If credential is correct, then return result is TRUE
+    'If credential is wrong, then return result is FALSE
+    bResult = LogonUser(strUserName, strDomain, strPassword, 2, 0, 0)
+
+    If bResult Then
+        MsgBox "Successfully Logon, User is authenticated."
+    Else
+        MsgBox "An Error Occured While Trying To Logon. User is NOT authenticated." & vbCrLf & "Error Code:" & Err.LastDllError
+    End If
+
+End Sub
+
+
+Private Sub UserForm_Initialize()
+'Try to read userdomain and username from environment variables
+'User can manually change it in the textbox
+    TextBoxDomain = Environ$("userdomain")
+    TextBoxUserName = Environ$("username")
+End Sub
